@@ -20,40 +20,39 @@ db = SQLAlchemy(app)
 
 
 # class にクエリをまとめるととても綺麗になる方オススメ
-
 class Person(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
-    pets = db.relationship('Pet', backref='owner', lazy='dynamic')
+    hobbies = db.relationship('Hobby', backref='person', lazy='dynamic')
+    """
+    hobbiesではカラムが追加しているのではなく、Hobbyに対して関連性を設定
+    to_dict()メソッドはオブジェクトをjsonで返すためのメソッド
+    """
 
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
-            'pets': [Pet.to_dict(pet) for pet in self.pets.all()]
-
+            # Personに紐づいているHobbyを全部出力
+            'hobby': [Hobby.to_dict(hobby) for hobby in self.hobbies.all()]
         }
 
 
-class Pet(db.Model):
+class Hobby(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
-    owner_id = db.Column(db.Integer, db.ForeignKey('person.id'))
+    person_id = db.Column(db.Integer, db.ForeignKey('person.id'))
 
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
-
         }
 
 
 @app.route('/')
 def index():
-    person = [Person.to_dict(person) for person in Person.query.all()]
-    return jsonify({
-        "response": person
-    })
+    return jsonify({"data": [Person.to_dict(person) for person in Person.query.all()]})
 
 
 if __name__ == '__main__':
